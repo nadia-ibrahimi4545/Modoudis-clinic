@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+
+# پس از انتشار سایت، خط زیر را با آدرس واقعی فعال کنید:
+# Sitemap: https://YOUR-DOMAIN/sitemap.xml

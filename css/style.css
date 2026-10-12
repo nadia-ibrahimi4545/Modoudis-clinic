@@ -1057,5 +1057,10 @@ body .u11{color:#f2e4c2}
 body .u12{max-width:640px}
 body .u13{align-items:center}
 body .u14{flex-basis:360px}
-body .u15{display:none}
 body .u16{color:var(--ink-soft);font-size:.9rem}
+
+/* ===== اصلاحات نهایی ===== */
+img{height:auto}
+.skip-link{position:fixed; top:-100px; inset-inline-start:1rem; z-index:3000; padding:.7rem 1.2rem; border-radius:12px; background:var(--teal-900); color:#fff; font-weight:700; text-decoration:none; transition:top .2s}
+.skip-link:focus{top:.8rem}
+main{display:block}

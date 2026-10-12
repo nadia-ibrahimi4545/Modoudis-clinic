@@ -1,16 +1,19 @@
 document.documentElement.classList.add('js'); // برای انیمیشن ظاهر شدن کارت‌ها
 
-var WHATSAPP_NUMBER = '93799337036'; // شماره واتساپ کلینیک (با کد کشور، بدون +)
+var WHATSAPP_NUMBER = '93796337036'; // شماره واتساپ کلینیک (با کد کشور، بدون +)
 var navToggle = document.getElementById('navToggle'), navLinks = document.getElementById('navLinks'), siteNav = document.getElementById('siteNav');
-function setMenu(open){ navLinks.classList.toggle('open', open); navToggle.setAttribute('aria-expanded', open ? 'true' : 'false'); }
-navToggle.addEventListener('click', function(e){ e.stopPropagation(); setMenu(!navLinks.classList.contains('open')); });
-navLinks.addEventListener('click', function(e){ if(e.target.closest('a')) setMenu(false); });
-document.addEventListener('click', function(e){ if(!siteNav.contains(e.target)) setMenu(false); });
+function setMenu(open){ if(!navLinks||!navToggle) return; navLinks.classList.toggle('open', open); navToggle.setAttribute('aria-expanded', open ? 'true' : 'false'); }
+if(navToggle && navLinks && siteNav){
+  navToggle.addEventListener('click', function(e){ e.stopPropagation(); setMenu(!navLinks.classList.contains('open')); });
+  navLinks.addEventListener('click', function(e){ if(e.target.closest('a')) setMenu(false); });
+  document.addEventListener('click', function(e){ if(!siteNav.contains(e.target)) setMenu(false); });
+}
 document.addEventListener('keydown', function(e){ if(e.key === 'Escape') setMenu(false); });
 window.addEventListener('resize', function(){ if(window.innerWidth > 1100) setMenu(false); });
 
 /* حالت اسکرول هدر + مشخص‌کردن بخش فعال در منو */
-(function(){
+(function(){ try{
+  if(!navLinks || !siteNav) return;
   var secs = [].slice.call(document.querySelectorAll('section[id]')),
       links = [].slice.call(navLinks.querySelectorAll('a[href^="#"]')).filter(function(a){ return !a.classList.contains('sn-cta'); }),
       ticking = false;
@@ -24,10 +27,11 @@ window.addEventListener('resize', function(){ if(window.innerWidth > 1100) setMe
   window.addEventListener('scroll', function(){ if(!ticking){ ticking = true; requestAnimationFrame(update); } }, {passive:true});
   window.addEventListener('resize', update);
   update();
+ }catch(err){ console.error('scroll-spy:',err); }
 })();
 
 /* ظاهر شدن نرم کارت‌ها هنگام اسکرول */
-(function(){
+(function(){ try{
   var els = [].slice.call(document.querySelectorAll('.stats-card,.dr-quote,.an-collage,.an-tag,.bmi-card,.step-card,.map-card,.measure-chip,.dv-card,.service-card,.why-item,.contact-card,.faq-list details,.diet-photo,.env-photo,.physio-band,.footer-cta,.fg-brand,.fg-col'));
   if(!('IntersectionObserver' in window) || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
   els.forEach(function(el){
@@ -42,10 +46,11 @@ window.addEventListener('resize', function(){ if(window.innerWidth > 1100) setMe
     entries.forEach(function(en){ if(en.isIntersecting){ en.target.classList.add('in'); io.unobserve(en.target); } });
   }, {threshold:.12, rootMargin:'0px 0px -5% 0px'});
   els.forEach(function(el){ io.observe(el); });
+ }catch(err){ console.error('reveal:',err); }
 })();
 
 /* ماشین‌حساب BMI */
-(function(){
+(function(){ try{
   var H=document.getElementById('bmi-h'), W=document.getElementById('bmi-w'), card=document.getElementById('bmiCard');
   if(!H||!W) return;
   var FA='۰۱۲۳۴۵۶۷۸۹';
@@ -75,66 +80,27 @@ window.addEventListener('resize', function(){ if(window.innerWidth > 1100) setMe
     card.classList.add('has-result');
   }
   H.addEventListener('input',calc); W.addEventListener('input',calc);
+  H.addEventListener('change',calc); W.addEventListener('change',calc);
+  calc();
+ }catch(err){ console.error('bmi:',err); }
 })();
 
-var FORM_EMAIL = 'doctormodawi.clinic@gmail.com'; // ایمیل کلینیک؛ بعد از فعال‌سازی FormSubmit می‌توانید کد اختصاصی را جایگزین کنید
+/* ارسال فرم نوبت‌دهی به واتساپ کلینیک */
 document.getElementById('apptForm').addEventListener('submit', function(e){
   e.preventDefault();
   if(!this.checkValidity()){ this.reportValidity(); return; }
-  var form = this, f = form.elements, btn = form.querySelector('.submit-btn'),
-      box = document.getElementById('successMsg'), label = btn.querySelector('span');
-  if(f._honey && f._honey.value) return; // ضد اسپم
-  var data = {
-    'نام': f.name.value.trim(),
-    'شماره تماس': f.phone.value.trim(),
-    'خدمت': f.service.value,
-    'زمان پیشنهادی': f.when.value.trim() || '-',
-    'توضیحات': f.note.value.trim() || '-',
-    _subject: 'درخواست نوبت جدید از وب‌سایت کلینیک',
-    _template: 'table',
-    _captcha: 'false'
-  };
-  var oldLabel = label.textContent; btn.disabled = true; label.textContent = 'در حال ارسال...';
-  function waLink(){
-    var lines = ['سلام، می‌خواهم نوبت بگیرم.','نام: '+data['نام'],'شماره تماس: '+data['شماره تماس'],'خدمت: '+data['خدمت']];
-    return 'https://wa.me/' + WHATSAPP_NUMBER + '?text=' + encodeURIComponent(lines.join('\n'));
-  }
-  fetch('https://formsubmit.co/ajax/' + FORM_EMAIL, {
-    method: 'POST',
-    headers: {'Content-Type':'application/json','Accept':'application/json'},
-    body: JSON.stringify(data)
-  }).then(function(r){ return r.json(); }).then(function(res){
-    if(res && (res.success === true || res.success === 'true')){
-      box.textContent = 'درخواست شما ثبت شد؛ به‌زودی با شما تماس می‌گیریم. سپاس از اعتماد شما.';
-      form.reset();
-    } else { throw new Error('fail'); }
-  }).catch(function(){
-    box.textContent = 'ارسال انجام نشد. لطفاً دوباره تلاش کنید یا ';
-    var a = document.createElement('a'); a.href = waLink(); a.target = '_blank'; a.rel = 'noopener'; a.textContent = 'از طریق واتساپ پیام دهید.';
-    box.appendChild(a);
-  }).then(function(){
-    box.style.display = 'block'; btn.disabled = false; label.textContent = oldLabel;
-  });
+  var f = this.elements, box = document.getElementById('successMsg');
+  var lines = ['سلام، می‌خواهم نوبت بگیرم.', '',
+    'نام: ' + f.name.value.trim(),
+    'شماره تماس: ' + f.phone.value.trim(),
+    'خدمت: ' + f.service.value];
+  if(f.when.value.trim()) lines.push('زمان پیشنهادی: ' + f.when.value.trim());
+  if(f.note.value.trim()) lines.push('توضیحات: ' + f.note.value.trim());
+  var url = 'https://wa.me/' + WHATSAPP_NUMBER + '?text=' + encodeURIComponent(lines.join('\n'));
+  var w = window.open(url, '_blank');
+  if(w){ try{ w.opener = null; }catch(_){} } else { window.location.href = url; } // اگر پاپ‌آپ بسته بود، در همین تب باز شود
+  box.textContent = 'در حال انتقال به واتساپ... اگر باز نشد، ';
+  var a = document.createElement('a'); a.href = url; a.target = '_blank'; a.rel = 'noopener'; a.textContent = 'اینجا را بزنید.';
+  box.appendChild(a); box.style.display = 'block';
+  this.reset();
 });
-
-
-/* انتخاب پکیج: خدمت و توضیحات فرم پر می‌شود */
-document.querySelectorAll('[data-package]').forEach(function(a){
-  a.addEventListener('click', function(){
-    var sel=document.getElementById('f-service'), note=document.getElementById('f-note');
-    if(sel){ for(var i=0;i<sel.options.length;i++){ if(sel.options[i].text.trim()==='پکیج درمانی'){ sel.selectedIndex=i; break; } } }
-    if(note){ note.value='پکیج انتخابی: '+a.getAttribute('data-package'); }
-  });
-});
-/* نظر مراجعین: فقط نظرهای واقعی و با اجازهٔ صاحب نظر را اینجا اضافه کنید: {name:'...', text:'...'} */
-(function(){
-  var REVIEWS=[];
-  var box=document.getElementById('rvList'); if(!box||!REVIEWS.length) return;
-  REVIEWS.forEach(function(r){
-    var d=document.createElement('div'); d.className='rv-item';
-    var p=document.createElement('p'); p.textContent=r.text;
-    var b=document.createElement('b'); b.textContent=r.name;
-    d.appendChild(p); d.appendChild(b); box.appendChild(d);
-  });
-  box.hidden=false;
-})();
